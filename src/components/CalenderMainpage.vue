@@ -1,35 +1,60 @@
 <template>
   <div class="calendar">
     <div class="controls">
-      <button @click="prevMonth">Prev</button>
+      <button @click="changeMonth(-1)" aria-label="Previous month">Prev</button>
       <h2>{{ formattedMonth }}</h2>
-      <button @click="nextMonth">Next</button>
+      <button @click="changeMonth(1)" aria-label="Next month">Next</button>
     </div>
     <div class="days-header">
       <div class="day-name" v-for="day in weekdays" :key="day">{{ day }}</div>
     </div>
     <div class="days-grid">
-      <div class="day" v-for="(day, index) in days" :key="index">
-        {{ day }}
+      <div
+          v-for="day in days"
+          :key="day.date"
+          :class="['day', { 'available': isAvailable(day.date), 'unavailable': !isAvailable(day.date) }]"
+          @click="selectDate(day.date)"
+      >
+        {{ day.dayOfMonth }}
       </div>
+    </div>
+    <div v-if="selectedDateTimes.length > 0" class="time-slots">
+      <h3>Available times for {{ format(selectedDate, 'MMMM d, yyyy') }}:</h3>
+      <button
+          v-for="dateTime in selectedDateTimes"
+          :key="dateTime.id"
+          @click="selectDateTime(dateTime)"
+      >
+        {{ format(new Date(dateTime.time), 'h:mm a') }}
+      </button>
     </div>
   </div>
 </template>
 
 <script>
-import { format, subMonths, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import {
+  format,
+  addMonths,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  parseISO
+} from 'date-fns';
+import axios from 'axios';
 
 export default {
+  name: 'CalendarMainpage',
   data() {
     return {
       currentDate: new Date(),
-      availability: {
-        '2024-08-01': true,
-        '2024-08-05': false,
-        '2024-08-15': true,
-        '2024-08-20': false,
-        // Add more dates as needed
-      },
+      weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      availableDateTimes: ['01-05-2025'],
+      selectedDate: null,
+      selectedDateTimes: [],
+      isLoading: false
     };
   },
   computed: {
@@ -39,30 +64,51 @@ export default {
     days() {
       const startDay = startOfWeek(startOfMonth(this.currentDate));
       const endDay = endOfWeek(endOfMonth(this.currentDate));
-      return eachDayOfInterval({ start: startDay, end: endDay }).map(day => day.getDate());
-    },
-    weekdays() {
-      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    },
-    computed: {
-      days() {
-        const startDay = startOfWeek(startOfMonth(this.currentDate));
-        const endDay = endOfWeek(endOfMonth(this.currentDate));
-        return eachDayOfInterval({ start: startDay, end: endDay }).map(day => ({
-          date: day.getDate(),
-          isAvailable: this.availability[format(day, 'yyyy-MM-dd')] // Check availability
-        }));
-      },
-    },
+      return eachDayOfInterval({ start: startDay, end: endDay })
+          .map(date => ({
+            date,
+            dayOfMonth: date.getDate()
+          }));
+    }
   },
   methods: {
-    prevMonth() {
-      this.currentDate = subMonths(this.currentDate, 1);
+    async fetchAvailableDates() {
+      this.isLoading = true;
+      try {
+        const response = await axios.get('https://api.example.com/available-tours');
+        this.availableDateTimes = response.data.map(item => ({
+          ...item,
+          date: parseISO(item.date)
+        }));
+      } catch (error) {
+        console.error('Error fetching available dates:', error);
+      } finally {
+        this.isLoading = false;
+      }
     },
-    nextMonth() {
-      this.currentDate = addMonths(this.currentDate, 1);
+    changeMonth(delta) {
+      this.currentDate = addMonths(this.currentDate, delta);
     },
+    isAvailable(date) {
+      return this.availableDateTimes.some(dateTime =>
+          isSameDay(dateTime.date, date)
+      );
+    },
+    selectDate(date) {
+      if (this.isAvailable(date)) {
+        this.selectedDate = date;
+        this.selectedDateTimes = this.availableDateTimes.filter(dateTime =>
+            isSameDay(dateTime.date, date)
+        );
+      }
+    },
+    selectDateTime(dateTime) {
+      this.$emit('datetime-selected', dateTime);
+    }
   },
+  created() {
+    this.fetchAvailableDates();
+  }
 };
 </script>
 
@@ -74,20 +120,56 @@ export default {
   max-width: 600px;
   margin: 0 auto;
 }
+
 .controls {
   display: flex;
   justify-content: space-between;
   width: 100%;
+  margin-bottom: 1rem;
 }
+
 .days-header, .days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   width: 100%;
 }
+
 .day-name, .day {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 40px;
+}
+
+.day {
+  cursor: pointer;
+}
+
+.day.available {
+  background-color: #e6f7e6;
+}
+
+.day.unavailable {
+  background-color: #f7e6e6;
+  cursor: not-allowed;
+}
+
+.time-slots {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.time-slots button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #e6f7e6;
+  border: 1px solid #4CAF50;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.time-slots button:hover {
+  background-color: #4CAF50;
+  color: white;
 }
 </style>

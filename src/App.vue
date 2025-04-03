@@ -1,4 +1,5 @@
 <template>
+  <h1 class="main-title">Ben's Food Tour Amsterdam</h1>
   <div id="app">
     <CalenderMainpage/>
   </div>
