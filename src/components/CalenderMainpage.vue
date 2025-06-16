@@ -75,10 +75,19 @@ export default {
     async fetchAvailableDates() {
       this.isLoading = true;
       try {
-        const response = await axios.get('https://api.example.com/available-tours');
-        this.availableDateTimes = response.data.map(item => ({
-          ...item,
-          date: parseISO(item.date)
+        // Get current month/year from this.currentDate
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth() + 1; // JS months are 0-based
+        const partySize = 2; // You'll need to get this from user input
+
+        const response = await axios.get(`/api/tour-availability`, {
+          params: { year, month, partySize }
+        });
+
+        // Backend returns array of LocalDate strings like ["2025-06-15", "2025-06-20"]
+        this.availableDateTimes = response.data.map(dateStr => ({
+          date: parseISO(dateStr),
+          id: dateStr
         }));
       } catch (error) {
         console.error('Error fetching available dates:', error);
