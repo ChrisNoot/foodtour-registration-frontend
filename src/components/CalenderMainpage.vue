@@ -85,7 +85,7 @@
             <span class="check-icon">✅</span>
             <span>Available for your party</span>
           </div>
-          <button class="book-button" @click="startBooking">
+          <button v-if="!showBookingForm" class="book-button" @click="showBookingForm = true">
             <span class="button-text">Book Now</span>
             <span class="button-price">€{{ totalPrice }}</span>
           </button>
@@ -98,6 +98,129 @@
         </div>
       </div>
     </div>
+
+    <!-- Booking Form (slides down when Book Now is clicked) -->
+    <transition name="slide-down">
+      <div v-if="showBookingForm" class="booking-form">
+        <div class="form-header">
+          <h3>Complete Your Booking</h3>
+          <button class="close-form" @click="closeBookingForm">×</button>
+        </div>
+
+        <div class="booking-summary-mini">
+          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} • {{ partySize }} people • €{{ totalPrice }}</span>
+        </div>
+
+        <form @submit.prevent="processBooking" class="booking-details">
+          <!-- Customer Information -->
+          <div class="form-section">
+            <h4>Your Details</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input
+                    type="text"
+                    id="firstName"
+                    v-model="bookingForm.firstName"
+                    required
+                    placeholder="John"
+                >
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input
+                    type="text"
+                    id="lastName"
+                    v-model="bookingForm.lastName"
+                    required
+                    placeholder="Doe"
+                >
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input
+                    type="email"
+                    id="email"
+                    v-model="bookingForm.email"
+                    required
+                    placeholder="john@example.com"
+                >
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone *</label>
+                <input
+                    type="tel"
+                    id="phone"
+                    v-model="bookingForm.phone"
+                    required
+                    placeholder="+31 6 1234 5678"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="form-section">
+            <h4>Additional Information <span class="optional">(Optional)</span></h4>
+            <div class="form-group">
+              <label for="dietary">Dietary Restrictions or Allergies</label>
+              <textarea
+                  id="dietary"
+                  v-model="bookingForm.dietaryRestrictions"
+                  placeholder="e.g., Vegetarian, Gluten-free, Nut allergy..."
+                  rows="2"
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="requests">Special Requests</label>
+              <textarea
+                  id="requests"
+                  v-model="bookingForm.specialRequests"
+                  placeholder="e.g., Wheelchair accessible, Birthday celebration..."
+                  rows="2"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Payment Section -->
+          <div class="form-section">
+            <h4>Payment</h4>
+            <div class="payment-summary">
+              <div class="payment-row">
+                <span>{{ partySize }} × €{{ selectedDateInfo.pricePerPerson }}</span>
+                <span>€{{ totalPrice }}</span>
+              </div>
+              <div class="payment-total">
+                <span>Total Amount</span>
+                <span>€{{ totalPrice }}</span>
+              </div>
+            </div>
+
+            <!-- Stripe Payment Element would go here -->
+            <div class="payment-element">
+              <div class="card-placeholder">
+                💳 Secure payment with Stripe
+                <small>Credit card, iDEAL, and more payment methods</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="cancel-button" @click="closeBookingForm">
+              Cancel
+            </button>
+            <button type="submit" class="confirm-booking-button" :disabled="isProcessing">
+              <span v-if="!isProcessing">Complete Booking - €{{ totalPrice }}</span>
+              <span v-else>Processing...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </transition>
 
     <!-- Loading state -->
     <div v-if="isLoading" class="loading">
@@ -131,7 +254,17 @@ export default {
       availableDateTimes: [],
       scheduledTours: [],
       selectedDate: null,
-      isLoading: false
+      isLoading: false,
+      showBookingForm: false,
+      isProcessing: false,
+      bookingForm: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        dietaryRestrictions: '',
+        specialRequests: ''
+      }
     };
   },
   computed: {
@@ -188,7 +321,6 @@ export default {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth() + 1;
 
-        // Fetch available dates for current party size
         const availabilityResponse = await axios.get(`/api/tour-availability`, {
           params: { year, month, partySize: this.partySize }
         });
@@ -198,7 +330,6 @@ export default {
           id: dateStr
         }));
 
-        // Fetch all scheduled tours with capacity info
         const toursResponse = await axios.get('/api/scheduled-tours', {
           params: { year, month }
         });
@@ -215,23 +346,71 @@ export default {
     selectDate(date) {
       if (!this.isScheduledDate(date)) return;
       this.selectedDate = date;
+      this.showBookingForm = false; // Reset form when selecting new date
     },
 
-    startBooking() {
-      const message = `Booking Details:
+    closeBookingForm() {
+      this.showBookingForm = false;
+      this.resetBookingForm();
+    },
+
+    resetBookingForm() {
+      this.bookingForm = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        dietaryRestrictions: '',
+        specialRequests: ''
+      };
+    },
+
+    async processBooking() {
+      this.isProcessing = true;
+
+      try {
+        // Here you would integrate with Stripe and your backend
+        const bookingData = {
+          scheduledTourId: this.getScheduledTourId(),
+          partySize: this.partySize,
+          totalAmount: this.totalPrice,
+          customerInfo: this.bookingForm
+        };
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        alert(`Booking confirmed!
 
 Tour: ${this.selectedDateInfo.tourName}
 Date: ${format(this.selectedDate, 'MMMM d, yyyy')}
-Party size: ${this.partySize} ${this.partySize === 1 ? 'person' : 'people'}
-Price per person: €${this.selectedDateInfo.pricePerPerson}
-Total price: €${this.totalPrice}`;
+Name: ${this.bookingForm.firstName} ${this.bookingForm.lastName}
+Email: ${this.bookingForm.email}
+Total: €${this.totalPrice}
 
-      alert(message);
+Confirmation details will be sent to your email.`);
+
+        this.closeBookingForm();
+
+      } catch (error) {
+        console.error('Booking failed:', error);
+        alert('Booking failed. Please try again.');
+      } finally {
+        this.isProcessing = false;
+      }
+    },
+
+    getScheduledTourId() {
+      const tour = this.scheduledTours.find(tour =>
+          isSameDay(parseISO(tour.localDate), this.selectedDate)
+      );
+      return tour ? tour.scheduledTourId : null;
     },
 
     changeMonth(delta) {
       this.currentDate = addMonths(this.currentDate, delta);
       this.selectedDate = null;
+      this.showBookingForm = false;
       this.fetchData();
     },
 
@@ -257,6 +436,237 @@ Total price: €${this.totalPrice}`;
 </script>
 
 <style scoped>
+/* Previous styles remain the same, plus these additions: */
+
+.booking-form {
+  margin-top: 1rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.form-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.close-form {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.close-form:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.booking-summary-mini {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+}
+
+.booking-details {
+  padding: 1.5rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.optional {
+  color: #666;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.payment-summary {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+.payment-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+  font-weight: 700;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.payment-element {
+  margin-bottom: 1.5rem;
+}
+
+.card-placeholder {
+  padding: 1.5rem;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  text-align: center;
+  color: #666;
+  background: #fafafa;
+}
+
+.card-placeholder small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button {
+  flex: 1;
+  padding: 1rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.cancel-button:hover {
+  background: #5a6268;
+}
+
+.confirm-booking-button {
+  flex: 2;
+  padding: 1rem;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.confirm-booking-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+  transform: translateY(-1px);
+}
+
+.confirm-booking-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Slide down animation */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.4s ease;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+/* All previous styles from the earlier version remain the same */
 .calendar {
   display: flex;
   flex-direction: column;
