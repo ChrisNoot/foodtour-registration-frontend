@@ -48,17 +48,29 @@
     <div v-if="selectedDateInfo" class="capacity-info">
       <h3>{{ selectedDateInfo.tourName }}</h3>
       <p><strong>Date:</strong> {{ format(selectedDate, 'MMMM d, yyyy') }}</p>
+
+      <!-- Price display -->
+      <div class="price-info">
+        <p><strong>Price per person:</strong> €{{ selectedDateInfo.pricePerPerson }}</p>
+        <p><strong>Party size:</strong> {{ partySize }} people</p>
+        <div class="total-price">
+          <strong>Total: €{{ totalPrice }}</strong>
+        </div>
+      </div>
+
+      <!-- Capacity bar -->
       <div class="capacity-bar">
         <div class="capacity-fill" :style="{ width: capacityPercentage + '%' }"></div>
         <span class="capacity-text">{{ selectedDateInfo.currentBookings }}/{{ selectedDateInfo.maxCapacity }} people</span>
       </div>
       <p><strong>Available spots:</strong> {{ selectedDateInfo.availableSpots }}</p>
-      <p><strong>Your party size:</strong> {{ partySize }} people</p>
 
       <div class="booking-status">
         <div v-if="selectedDateInfo.canAccommodateParty" class="available-message">
           ✅ Available for your party of {{ partySize }}
-          <button class="book-button" @click="startBooking">Book Now</button>
+          <button class="book-button" @click="startBooking">
+            Book Now - €{{ totalPrice }}
+          </button>
         </div>
         <div v-else class="unavailable-message">
           ❌ Not enough space for your party of {{ partySize }}
@@ -126,18 +138,25 @@ export default {
       const maxCapacity = tour.tour.maxCapacity;
       const availableSpots = maxCapacity - currentBookings;
       const canAccommodateParty = availableSpots >= this.partySize;
+      const pricePerPerson = parseFloat(tour.tour.pricePerPerson || 0);
 
       return {
         tourName: tour.tour.name,
         currentBookings,
         maxCapacity,
         availableSpots,
-        canAccommodateParty
+        canAccommodateParty,
+        pricePerPerson: pricePerPerson.toFixed(2)
       };
     },
     capacityPercentage() {
       if (!this.selectedDateInfo) return 0;
       return (this.selectedDateInfo.currentBookings / this.selectedDateInfo.maxCapacity) * 100;
+    },
+    totalPrice() {
+      if (!this.selectedDateInfo) return '0.00';
+      const total = parseFloat(this.selectedDateInfo.pricePerPerson) * this.partySize;
+      return total.toFixed(2);
     }
   },
   methods: {
@@ -177,7 +196,15 @@ export default {
     },
 
     startBooking() {
-      alert(`Starting booking for ${this.partySize} people on ${format(this.selectedDate, 'MMMM d, yyyy')}`);
+      const message = `Starting booking:
+
+Tour: ${this.selectedDateInfo.tourName}
+Date: ${format(this.selectedDate, 'MMMM d, yyyy')}
+Party size: ${this.partySize} people
+Price per person: €${this.selectedDateInfo.pricePerPerson}
+Total price: €${this.totalPrice}`;
+
+      alert(message);
     },
 
     changeMonth(delta) {
@@ -208,37 +235,46 @@ export default {
 </script>
 
 <style scoped>
+/* Previous styles remain, plus these additions: */
 
-.day.no-tour {
-  background-color: #f5f5f5;
-  color: #ccc;
-  cursor: not-allowed;
+.price-info {
+  background-color: #f0f8ff;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  border-left: 4px solid #4CAF50;
 }
 
-.capacity-bar {
-  position: relative;
-  width: 100%;
-  height: 30px;
-  background-color: #e0e0e0;
-  border-radius: 15px;
-  margin: 10px 0;
-  overflow: hidden;
+.price-info p {
+  margin: 0.5rem 0;
 }
 
-.capacity-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50 0%, #FFC107 70%, #f44336 90%);
-  transition: width 0.3s ease;
+.total-price {
+  font-size: 1.2em;
+  color: #2e7d32;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #e8f5e8;
+  border-radius: 4px;
+  text-align: center;
 }
 
-.capacity-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.book-button {
+  display: block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: #333;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+  transition: background-color 0.3s;
+}
+
+.book-button:hover {
+  background-color: #45a049;
 }
 
 /* Rest of existing styles... */
