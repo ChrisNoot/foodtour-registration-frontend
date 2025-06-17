@@ -1,5 +1,23 @@
 <template>
   <div class="calendar">
+
+    <!-- Party size selector with 1-10 options -->
+    <div class="party-size-selector">
+      <label for="party-size">Party size:</label>
+      <select id="party-size" v-model="partySize" @change="fetchAvailableDates">
+        <option value="1">1 person</option>
+        <option value="2">2 people</option>
+        <option value="3">3 people</option>
+        <option value="4">4 people</option>
+        <option value="5">5 people</option>
+        <option value="6">6 people</option>
+        <option value="7">7 people</option>
+        <option value="8">8 people</option>
+        <option value="9">9 people</option>
+        <option value="10">10 people</option>
+      </select>
+    </div>
+
     <div class="controls">
       <button @click="changeMonth(-1)" aria-label="Previous month">Prev</button>
       <h2>{{ formattedMonth }}</h2>
@@ -50,8 +68,9 @@ export default {
   data() {
     return {
       currentDate: new Date(),
+      partySize: 2, // Default to 2 people
       weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-      availableDateTimes: ['01-05-2025'],
+      availableDateTimes: [],
       selectedDate: null,
       selectedDateTimes: [],
       isLoading: false
@@ -75,16 +94,17 @@ export default {
     async fetchAvailableDates() {
       this.isLoading = true;
       try {
-        // Get current month/year from this.currentDate
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth() + 1; // JS months are 0-based
-        const partySize = 2; // You'll need to get this from user input
 
         const response = await axios.get(`/api/tour-availability`, {
-          params: { year, month, partySize }
+          params: {
+            year,
+            month,
+            partySize: this.partySize
+          }
         });
 
-        // Backend returns array of LocalDate strings like ["2025-06-15", "2025-06-20"]
         this.availableDateTimes = response.data.map(dateStr => ({
           date: parseISO(dateStr),
           id: dateStr
@@ -122,6 +142,23 @@ export default {
 </script>
 
 <style scoped>
+.party-size-selector {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.party-size-selector label {
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.party-size-selector select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
 .calendar {
   display: flex;
   flex-direction: column;
