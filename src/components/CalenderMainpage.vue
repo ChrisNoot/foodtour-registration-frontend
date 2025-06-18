@@ -370,12 +370,12 @@ export default {
 
       try {
         // Here you would integrate with Stripe and your backend
-        const bookingData = {
-          scheduledTourId: this.getScheduledTourId(),
-          partySize: this.partySize,
-          totalAmount: this.totalPrice,
-          customerInfo: this.bookingForm
-        };
+        // const bookingData = {
+        //   scheduledTourId: this.getScheduledTourId(),
+        //   partySize: this.partySize,
+        //   totalAmount: this.totalPrice,
+        //   customerInfo: this.bookingForm
+        // };
 
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 2000));
