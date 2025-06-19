@@ -1064,4 +1064,69 @@ export default {
 .check-icon, .cross-icon {
   font-size: 1.2rem;
 }
+
+.stripe-payment-info {
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.payment-method:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.payment-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.secure-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.lock-icon {
+  font-size: 1.1rem;
+}
+
+.stripe-payment-info small {
+  display: block;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* Remove the old card-placeholder styles and replace with these */
+.payment-element {
+  margin-bottom: 1.5rem;
+}
 </style>
