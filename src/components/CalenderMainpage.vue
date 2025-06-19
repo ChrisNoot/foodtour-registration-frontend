@@ -74,7 +74,9 @@
         </div>
         <div class="capacity-bar">
           <div class="capacity-fill" :style="{ width: capacityPercentage + '%' }"></div>
-          <span class="capacity-text">{{ selectedDateInfo.currentBookings }}/{{ selectedDateInfo.maxCapacity }} people</span>
+          <span class="capacity-text">{{ selectedDateInfo.currentBookings }}/{{
+              selectedDateInfo.maxCapacity
+            }} people</span>
         </div>
       </div>
 
@@ -108,7 +110,9 @@
         </div>
 
         <div class="booking-summary-mini">
-          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} • {{ partySize }} people • €{{ totalPrice }}</span>
+          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} • {{ partySize }} people • €{{
+              totalPrice
+            }}</span>
         </div>
 
         <form @submit.prevent="processBooking" class="booking-details">
@@ -199,24 +203,56 @@
               </div>
             </div>
 
-            <!-- Stripe Payment Element would go here -->
-            <div class="payment-element">
-              <div class="card-placeholder">
-                💳 Secure payment with Stripe
-                <small>Credit card, iDEAL, and more payment methods</small>
+            <!-- Payment Section -->
+            <div class="form-section">
+              <h4>Payment</h4>
+              <div class="payment-summary">
+                <div class="payment-row">
+                  <span>{{ partySize }} × €{{ selectedDateInfo.pricePerPerson }}</span>
+                  <span>€{{ totalPrice }}</span>
+                </div>
+                <div class="payment-total">
+                  <span>Total Amount</span>
+                  <span>€{{ totalPrice }}</span>
+                </div>
+              </div>
+
+              <!-- Updated Stripe info -->
+              <div class="payment-element">
+                <div class="stripe-payment-info">
+                  <div class="payment-methods">
+                    <div class="payment-method">
+                      <span class="payment-icon">💳</span>
+                      <span>Credit & Debit Cards</span>
+                    </div>
+                    <div class="payment-method">
+                      <span class="payment-icon">🇳🇱</span>
+                      <span>iDEAL</span>
+                    </div>
+                    <div class="payment-method">
+                      <span class="payment-icon">📱</span>
+                      <span>Apple Pay & Google Pay</span>
+                    </div>
+                  </div>
+                  <div class="secure-notice">
+                    <span class="lock-icon">🔒</span>
+                    <span>Secure payment powered by Stripe</span>
+                  </div>
+                  <small>You'll be redirected to complete your payment securely</small>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button type="button" class="cancel-button" @click="closeBookingForm">
-              Cancel
-            </button>
-            <button type="submit" class="confirm-booking-button" :disabled="isProcessing">
-              <span v-if="!isProcessing">Complete Booking - €{{ totalPrice }}</span>
-              <span v-else>Processing...</span>
-            </button>
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="cancel-button" @click="closeBookingForm">
+                Cancel
+              </button>
+              <button type="submit" class="confirm-booking-button" :disabled="isProcessing">
+                <span v-if="!isProcessing">Complete Booking - €{{ totalPrice }}</span>
+                <span v-else>Processing...</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -243,7 +279,7 @@ import {
   parseISO
 } from 'date-fns';
 import axios from 'axios';
-//import { loadStripe } from '@stripe/stripe-js';
+// import {loadStripe} from '@stripe/stripe-js';
 
 export default {
   name: 'CalendarMainpage',
@@ -275,7 +311,7 @@ export default {
     days() {
       const startDay = startOfWeek(startOfMonth(this.currentDate));
       const endDay = endOfWeek(endOfMonth(this.currentDate));
-      return eachDayOfInterval({ start: startDay, end: endDay })
+      return eachDayOfInterval({start: startDay, end: endDay})
           .map(date => ({
             date,
             dayOfMonth: date.getDate()
@@ -323,7 +359,7 @@ export default {
         const month = this.currentDate.getMonth() + 1;
 
         const availabilityResponse = await axios.get(`/api/tour-availability`, {
-          params: { year, month, partySize: this.partySize }
+          params: {year, month, partySize: this.partySize}
         });
 
         this.availableDateTimes = availabilityResponse.data.map(dateStr => ({
@@ -332,7 +368,7 @@ export default {
         }));
 
         const toursResponse = await axios.get('/api/scheduled-tours', {
-          params: { year, month }
+          params: {year, month}
         });
 
         this.scheduledTours = toursResponse.data;
@@ -370,33 +406,31 @@ export default {
       this.isProcessing = true;
 
       try {
-        // Here you would integrate with Stripe and your backend
-        // const bookingData = {
-        //   scheduledTourId: this.getScheduledTourId(),
-        //   partySize: this.partySize,
-        //   totalAmount: this.totalPrice,
-        //   customerInfo: this.bookingForm
-        // };
+        // Prepare booking data for backend
+        const bookingData = {
+          scheduledTourId: this.getScheduledTourId(),
+          partySize: this.partySize,
+          totalAmount: parseFloat(this.totalPrice),
+          customerInfo: this.bookingForm,
+          tourDate: format(this.selectedDate, 'yyyy-MM-dd')
+        };
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Call backend to create Stripe checkout session
+        const response = await axios.post('/api/bookings/create-checkout-session', bookingData);
 
-        alert(`Booking confirmed!
-
-Tour: ${this.selectedDateInfo.tourName}
-Date: ${format(this.selectedDate, 'MMMM d, yyyy')}
-Name: ${this.bookingForm.firstName} ${this.bookingForm.lastName}
-Email: ${this.bookingForm.email}
-Total: €${this.totalPrice}
-
-Confirmation details will be sent to your email.`);
-
-        this.closeBookingForm();
+        // Redirect to Stripe Checkout
+        window.location.href = response.data.checkoutUrl;
 
       } catch (error) {
         console.error('Booking failed:', error);
-        alert('Booking failed. Please try again.');
-      } finally {
+
+        // Better error handling
+        if (error.response && error.response.data) {
+          alert(`Booking failed: ${error.response.data}`);
+        } else {
+          alert('Booking failed. Please try again.');
+        }
+
         this.isProcessing = false;
       }
     },
@@ -443,7 +477,7 @@ Confirmation details will be sent to your email.`);
   margin-top: 1rem;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   overflow: hidden;
   width: 100%;
@@ -477,7 +511,7 @@ Confirmation details will be sent to your email.`);
 }
 
 .close-form:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .booking-summary-mini {
@@ -685,7 +719,7 @@ Confirmation details will be sent to your email.`);
   border-radius: 12px;
   color: white;
   width: 100%;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .party-size-selector label {
@@ -701,14 +735,14 @@ Confirmation details will be sent to your email.`);
   font-size: 1rem;
   background: white;
   color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .party-size-selector select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .controls {
@@ -818,7 +852,7 @@ Confirmation details will be sent to your email.`);
   background: white;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   overflow: hidden;
 }
@@ -906,7 +940,7 @@ Confirmation details will be sent to your email.`);
   background-color: #e9ecef;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .capacity-fill {
@@ -923,7 +957,7 @@ Confirmation details will be sent to your email.`);
   transform: translate(-50%, -50%);
   font-weight: 700;
   color: #333;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
   font-size: 0.9rem;
 }
 
@@ -1019,8 +1053,12 @@ Confirmation details will be sent to your email.`);
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .check-icon, .cross-icon {
