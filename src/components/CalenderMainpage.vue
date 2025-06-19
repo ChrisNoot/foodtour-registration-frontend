@@ -243,6 +243,7 @@ import {
   parseISO
 } from 'date-fns';
 import axios from 'axios';
+//import { loadStripe } from '@stripe/stripe-js';
 
 export default {
   name: 'CalendarMainpage',
