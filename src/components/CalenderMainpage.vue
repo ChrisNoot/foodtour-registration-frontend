@@ -33,9 +33,10 @@
           v-for="day in days"
           :key="day.date"
           :class="['day', {
-          'available': isAvailable(day.date),
-          'unavailable': !isAvailable(day.date) && isScheduledDate(day.date),
-          'no-tour': !isScheduledDate(day.date),
+          'past-date': isPastDate(day.date),
+          'available': !isPastDate(day.date) && isAvailable(day.date),
+          'unavailable': !isPastDate(day.date) && !isAvailable(day.date) && isScheduledDate(day.date),
+          'no-tour': !isPastDate(day.date) && !isScheduledDate(day.date),
           'selected': selectedDate && isSameDay(selectedDate, day.date)
         }]"
           @click="selectDate(day.date)"
@@ -315,7 +316,9 @@ import {
   endOfMonth,
   eachDayOfInterval,
   isSameDay,
-  parseISO
+  parseISO,
+  isBefore,
+  startOfDay
 } from 'date-fns';
 import axios from 'axios';
 
@@ -425,9 +428,16 @@ export default {
     },
 
     selectDate(date) {
+      // Don't allow selection of past dates
+      if (this.isPastDate(date)) return;
       if (!this.isScheduledDate(date)) return;
       this.selectedDate = date;
       this.showBookingForm = false; // Reset form when selecting new date
+    },
+
+    isPastDate(date) {
+      const today = startOfDay(new Date());
+      return isBefore(startOfDay(date), today);
     },
 
     closeBookingForm() {
@@ -671,6 +681,16 @@ export default {
 
 .day:hover {
   transform: scale(1.05);
+}
+
+.day.past-date {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.day.past-date:hover {
+  transform: none;
 }
 
 .day.available {
