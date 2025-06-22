@@ -299,7 +299,7 @@
         <!-- Footer -->
         <div class="popup-footer">
           <button @click="closeSuccessPopup" class="close-button">Close</button>
-          <button @click="handleViewDetails" class="details-button">View Details</button>
+<!--          <button @click="handleViewDetails" class="details-button">View Details</button>-->
         </div>
       </div>
     </div>
