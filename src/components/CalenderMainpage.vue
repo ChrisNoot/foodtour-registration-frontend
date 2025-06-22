@@ -232,6 +232,76 @@
       <div class="loading-spinner"></div>
       <span>Loading availability...</span>
     </div>
+
+    <!-- Booking Success Popup -->
+    <div v-if="showSuccessPopup" class="booking-success-overlay">
+      <div class="booking-success-popup">
+        <!-- Header -->
+        <div class="popup-header">
+          <button @click="closeSuccessPopup" class="close-popup">×</button>
+
+          <div class="success-content">
+            <div class="success-icon">
+              <span class="check-circle">✅</span>
+            </div>
+            <h2>Booking Confirmed!</h2>
+            <p>Your food tour has been successfully booked</p>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="popup-content">
+          <!-- Booking Details -->
+          <div class="booking-details-popup">
+            <div class="detail-row">
+              <div class="detail-icon">📅</div>
+              <div>
+                <p class="detail-label">Date & Time</p>
+                <p class="detail-value">{{ formatPopupDate(bookingDetails?.scheduledTour?.localDate) }}</p>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">👥</div>
+              <div>
+                <p class="detail-label">Party Size</p>
+                <p class="detail-value">{{ bookingDetails?.numberOfPeople }} {{ bookingDetails?.numberOfPeople === 1 ? 'person' : 'people' }}</p>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">📍</div>
+              <div>
+                <p class="detail-label">Tour</p>
+                <p class="detail-value">{{ bookingDetails?.scheduledTour?.tour?.name || 'Amsterdam Food Tour' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking Reference -->
+          <div class="booking-reference">
+            <p class="reference-label">Booking Reference</p>
+            <p class="reference-value">#{{ bookingRef }}</p>
+          </div>
+
+          <!-- Next Steps -->
+          <div class="next-steps">
+            <h3>What's Next?</h3>
+            <ul>
+              <li>You'll receive a confirmation email shortly</li>
+              <li>Meet at the designated starting point 15 minutes early</li>
+              <li>Bring a good appetite and comfortable walking shoes!</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="popup-footer">
+          <button @click="closeSuccessPopup" class="close-button">Close</button>
+          <button @click="handleViewDetails" class="details-button">View Details</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -269,7 +339,10 @@ export default {
         phone: '',
         dietaryRestrictions: '',
         specialRequests: ''
-      }
+      },
+      // Popup related data
+      showSuccessPopup: false,
+      bookingDetails: null
     };
   },
   computed: {
@@ -317,6 +390,9 @@ export default {
       if (!this.selectedDateInfo) return '0.00';
       const total = parseFloat(this.selectedDateInfo.pricePerPerson) * this.partySize;
       return total.toFixed(2);
+    },
+    bookingRef() {
+      return this.bookingDetails?.id?.toString().padStart(6, '0') || 'FT001234'
     }
   },
   methods: {
@@ -429,10 +505,57 @@ export default {
       );
     },
 
+    // Popup related methods
+    async checkForPaymentSuccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+
+      if (sessionId) {
+        try {
+          const response = await axios.get(`/api/bookings/verify-payment`, {
+            params: { session_id: sessionId }
+          });
+
+          if (response.status === 200) {
+            this.bookingDetails = response.data;
+            this.showSuccessPopup = true;
+            // Refresh the calendar data to show updated availability
+            await this.fetchData();
+          }
+        } catch (error) {
+          console.error('Payment verification failed:', error);
+        } finally {
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    },
+
+    closeSuccessPopup() {
+      this.showSuccessPopup = false;
+    },
+
+    handleViewDetails() {
+      console.log('View booking details:', this.bookingDetails);
+      // You can add navigation to a booking details page here
+      // this.$router.push(`/bookings/${this.bookingDetails.id}`);
+    },
+
+    formatPopupDate(dateString) {
+      if (!dateString) return 'Date TBD'
+      return new Date(dateString).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    },
+
     isSameDay,
     format
   },
-  created() {
+  async created() {
+    await this.checkForPaymentSuccess();
     this.fetchData();
   }
 };
@@ -1029,6 +1152,226 @@ export default {
   transform: translateY(-20px);
 }
 
+/* Booking Success Popup Styles */
+.booking-success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.booking-success-popup {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 100%;
+  overflow: hidden;
+  animation: popupAppear 0.3s ease-out;
+}
+
+@keyframes popupAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.popup-header {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+}
+
+.close-popup {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.close-popup:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.success-icon {
+  margin-bottom: 1rem;
+}
+
+.check-circle {
+  font-size: 3rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.popup-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.popup-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.popup-content {
+  padding: 1.5rem;
+}
+
+.booking-details-popup {
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-icon {
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.detail-label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.booking-reference {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.reference-label {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.reference-value {
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.next-steps {
+  border-top: 1px solid #e9ecef;
+  padding-top: 1.5rem;
+}
+
+.next-steps h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.next-steps ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-steps li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.next-steps li::before {
+  content: '•';
+  color: #28a745;
+  font-weight: bold;
+  margin-top: 0.1rem;
+}
+
+.popup-footer {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.close-button {
+  flex: 1;
+  padding: 0.75rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.close-button:hover {
+  background: #5a6268;
+}
+
+.details-button {
+  flex: 1;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.details-button:hover {
+  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+  transform: translateY(-1px);
+}
+
 /* Responsive design */
 @media (max-width: 600px) {
   .form-row {
@@ -1036,6 +1379,10 @@ export default {
   }
 
   .form-actions {
+    flex-direction: column;
+  }
+
+  .popup-footer {
     flex-direction: column;
   }
 }
