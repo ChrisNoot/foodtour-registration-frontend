@@ -1360,8 +1360,7 @@ export default {
 }
 
 .close-button {
-  flex: 1;
-  padding: 0.75rem;
+  padding: 0.75rem 2rem;
   background: #6c757d;
   color: white;
   border: none;
@@ -1375,7 +1374,7 @@ export default {
   background: #5a6268;
 }
 
-.details-button {
+/*.details-button {
   flex: 1;
   padding: 0.75rem;
   background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -1390,7 +1389,7 @@ export default {
 .details-button:hover {
   background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
   transform: translateY(-1px);
-}
+}*/
 
 /* Responsive design */
 @media (max-width: 600px) {
