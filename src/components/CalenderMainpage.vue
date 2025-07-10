@@ -49,7 +49,7 @@
     <div v-if="selectedDateInfo" class="capacity-info">
       <div class="tour-header">
         <h3>{{ selectedDateInfo.tourName }}</h3>
-        <p class="tour-date">{{ format(selectedDate, 'MMMM d, yyyy') }}</p>
+        <p class="tour-date">{{ format(selectedDate, 'MMMM d, yyyy') }} at {{ selectedDateInfo.startTime }}</p>
       </div>
 
       <!-- Pricing section -->
@@ -109,7 +109,7 @@
         </div>
 
         <div class="booking-summary-mini">
-          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} • {{ partySize }} people • €{{ totalPrice }}</span>
+          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} at {{ selectedDateInfo.startTime }} • {{ partySize }} people • €{{ totalPrice }}</span>
         </div>
 
         <form @submit.prevent="processBooking" class="booking-details">
@@ -258,7 +258,7 @@
               <div class="detail-icon">📅</div>
               <div>
                 <p class="detail-label">Date & Time</p>
-                <p class="detail-value">{{ formatPopupDate(bookingDetails?.scheduledTour?.localDate) }}</p>
+                <p class="detail-value">{{ formatPopupDate(bookingDetails?.scheduledTour?.localDate) }} at {{ bookingDetails?.scheduledTour?.startTime || '12:00' }}</p>
               </div>
             </div>
 
@@ -361,6 +361,8 @@ export default {
             dayOfMonth: date.getDate()
           }));
     },
+// Update the selectedDateInfo computed property in CalenderMainpage.vue
+
     selectedDateInfo() {
       if (!this.selectedDate) return null;
 
@@ -378,6 +380,7 @@ export default {
 
       return {
         tourName: tour.tour.name,
+        startTime: tour.startTime || '12:00',
         currentBookings,
         maxCapacity,
         availableSpots,
