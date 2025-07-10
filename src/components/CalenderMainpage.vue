@@ -5,16 +5,16 @@
       <!-- Top photos -->
       <div class="photo-row top-row">
         <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[0] }" data-direction="top-left">
-          <img src="/drumstick-logo.png" alt="Food Tour 1" class="tour-photo"/>
-          <div class="photo-caption">Stroopwafels</div>
+          <img src="/Broodje Rookworst.jpg" alt="Food Tour 1" class="tour-photo"/>
+          <div class="photo-caption">Broodje Rookworst</div>
         </div>
         <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[1] }" data-direction="top-center">
-          <img src="/drumstick-logo.png" alt="Food Tour 2" class="tour-photo"/>
-          <div class="photo-caption">Dutch Cheese</div>
+          <img src="/Fresh hering.jpg" alt="Food Tour 2" class="tour-photo"/>
+          <div class="photo-caption">Fresh herring</div>
         </div>
         <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[2] }" data-direction="top-right">
-          <img src="/drumstick-logo.png" alt="Food Tour 3" class="tour-photo"/>
-          <div class="photo-caption">Local Markets</div>
+          <img src="/fun!.jpg" alt="Food Tour 3" class="tour-photo"/>
+          <div class="photo-caption">Fun!</div>
         </div>
       </div>
 
@@ -260,16 +260,16 @@
         <!-- Bottom photos -->
         <div class="photo-row bottom-row">
           <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[3] }" data-direction="bottom-left">
-            <img src="/drumstick-logo.png" alt="Food Tour 4" class="tour-photo"/>
-            <div class="photo-caption">Amsterdam Cafés</div>
+            <img src="/Gouda cheese.jpg" alt="Food Tour 4" class="tour-photo"/>
+            <div class="photo-caption">Gouda cheese</div>
           </div>
           <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[4] }" data-direction="bottom-center">
-            <img src="/drumstick-logo.png" alt="Food Tour 5" class="tour-photo"/>
-            <div class="photo-caption">Traditional Bites</div>
+            <img src="/Muisjes.jpg" alt="Food Tour 5" class="tour-photo"/>
+            <div class="photo-caption">Dutch 'Muisjes'</div>
           </div>
           <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[5] }" data-direction="bottom-right">
-            <img src="/drumstick-logo.png" alt="Food Tour 6" class="tour-photo"/>
-            <div class="photo-caption">Sweet Treats</div>
+            <img src="/Streetfood.jpg" alt="Food Tour 6" class="tour-photo"/>
+            <div class="photo-caption">Streetfood</div>
           </div>
         </div>
       </div>
