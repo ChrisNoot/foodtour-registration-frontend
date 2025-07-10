@@ -575,6 +575,11 @@ export default {
 </script>
 
 <style scoped>
+/* Global box-sizing fix */
+* {
+  box-sizing: border-box;
+}
+
 .calendar {
   display: flex;
   flex-direction: column;
@@ -1017,16 +1022,20 @@ export default {
   font-size: 0.9rem;
 }
 
+/* Form row layout - Firefox fix */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1rem;
+  min-width: 0; /* Firefox: allows grid items to shrink */
 }
 
+/* Form groups - Firefox fix */
 .form-group {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Firefox: allows flex items to shrink below content size */
 }
 
 .form-group label {
@@ -1036,25 +1045,35 @@ export default {
   font-size: 0.9rem;
 }
 
+/* All form inputs - Firefox fix */
 .form-group input,
 .form-group textarea {
+  box-sizing: border-box; /* Critical for Firefox */
+  width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
+  font-family: inherit; /* Use parent font */
   transition: border-color 0.3s, box-shadow 0.3s;
+
+  /* Firefox-specific fixes */
+  -moz-appearance: none; /* Remove Firefox default styling */
+  outline: none; /* Remove focus outline, we'll add custom */
 }
 
+/* Focus states */
 .form-group input:focus,
 .form-group textarea:focus {
-  outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Textarea specific */
 .form-group textarea {
   resize: vertical;
   min-height: 60px;
+  font-family: inherit; /* Inherit font from parent */
 }
 
 .payment-summary {
@@ -1377,27 +1396,10 @@ export default {
   background: #5a6268;
 }
 
-/*.details-button {
-  flex: 1;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.details-button:hover {
-  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
-  transform: translateY(-1px);
-}*/
-
-/* Responsive design */
+/* Mobile responsive */
 @media (max-width: 600px) {
   .form-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Stack on mobile */
   }
 
   .form-actions {
