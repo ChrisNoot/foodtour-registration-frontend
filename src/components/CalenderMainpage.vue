@@ -1,100 +1,139 @@
 <template>
-  <div class="calendar">
-    <!-- Party size selector -->
-    <div class="party-size-selector">
-      <label for="party-size">Party size:</label>
-      <select id="party-size" v-model="partySize" @change="fetchData">
-        <option value="1">1 person</option>
-        <option value="2">2 people</option>
-        <option value="3">3 people</option>
-        <option value="4">4 people</option>
-        <option value="5">5 people</option>
-        <option value="6">6 people</option>
-        <option value="7">7 people</option>
-        <option value="8">8 people</option>
-        <option value="9">9 people</option>
-        <option value="10">10 people</option>
-      </select>
-    </div>
+  <div class="main-container">
+    <!-- Photos around the calendar -->
+    <div class="photo-grid">
+      <!-- Top photos -->
+      <div class="photo-row top-row">
+        <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[0] }" data-direction="top-left">
+          <img src="/drumstick-logo.png" alt="Food Tour 1" class="tour-photo"/>
+          <div class="photo-caption">Stroopwafels</div>
+        </div>
+        <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[1] }" data-direction="top-center">
+          <img src="/drumstick-logo.png" alt="Food Tour 2" class="tour-photo"/>
+          <div class="photo-caption">Dutch Cheese</div>
+        </div>
+        <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[2] }" data-direction="top-right">
+          <img src="/drumstick-logo.png" alt="Food Tour 3" class="tour-photo"/>
+          <div class="photo-caption">Local Markets</div>
+        </div>
+      </div>
 
-    <!-- Calendar controls -->
-    <div class="controls">
-      <button @click="changeMonth(-1)" aria-label="Previous month">Prev</button>
-      <h2>{{ formattedMonth }}</h2>
-      <button @click="changeMonth(1)" aria-label="Next month">Next</button>
-    </div>
+      <div class="calendar">
+        <!-- Party size selector -->
+        <div class="party-size-selector">
+          <label for="party-size">Party size:</label>
+          <select id="party-size" v-model="partySize" @change="fetchData">
+            <option value="1">1 person</option>
+            <option value="2">2 people</option>
+            <option value="3">3 people</option>
+            <option value="4">4 people</option>
+            <option value="5">5 people</option>
+            <option value="6">6 people</option>
+            <option value="7">7 people</option>
+            <option value="8">8 people</option>
+            <option value="9">9 people</option>
+            <option value="10">10 people</option>
+          </select>
+        </div>
 
-    <!-- Calendar grid -->
-    <div class="days-header">
-      <div class="day-name" v-for="day in weekdays" :key="day">{{ day }}</div>
-    </div>
-    <div class="days-grid">
-      <div
-          v-for="day in days"
-          :key="day.date"
-          :class="['day', {
+        <!-- Calendar controls -->
+        <div class="controls">
+          <button @click="changeMonth(-1)" aria-label="Previous month">Prev</button>
+          <h2>{{ formattedMonth }}</h2>
+          <button @click="changeMonth(1)" aria-label="Next month">Next</button>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="days-header">
+          <div class="day-name" v-for="day in weekdays" :key="day">{{ day }}</div>
+        </div>
+        <div class="days-grid">
+          <div
+              v-for="day in days"
+              :key="day.date"
+              :class="['day', {
           'past-date': isPastDate(day.date),
           'available': !isPastDate(day.date) && isAvailable(day.date),
           'unavailable': !isPastDate(day.date) && !isAvailable(day.date) && isScheduledDate(day.date),
           'no-tour': !isPastDate(day.date) && !isScheduledDate(day.date),
           'selected': selectedDate && isSameDay(selectedDate, day.date)
         }]"
-          @click="selectDate(day.date)"
-      >
-        {{ day.dayOfMonth }}
-      </div>
-    </div>
-
-    <!-- Capacity info panel -->
-    <div v-if="selectedDateInfo" class="capacity-info">
-      <div class="tour-header">
-        <h3>{{ selectedDateInfo.tourName }}</h3>
-        <p class="tour-date">{{ format(selectedDate, 'MMMM d, yyyy') }} at {{ selectedDateInfo.startTime }}</p>
-      </div>
-
-      <!-- Pricing section -->
-      <div class="pricing-section">
-        <div class="price-row">
-          <span class="price-label">Price per person:</span>
-          <span class="price-value">€{{ selectedDateInfo.pricePerPerson }}</span>
-        </div>
-        <div class="price-row">
-          <span class="price-label">Party size:</span>
-          <span class="price-value">{{ partySize }} {{ partySize === 1 ? 'person' : 'people' }}</span>
-        </div>
-        <div class="total-price-row">
-          <span class="total-label">Total Price:</span>
-          <span class="total-amount">€{{ totalPrice }}</span>
-        </div>
-      </div>
-
-      <!-- Capacity section -->
-      <div class="capacity-section">
-        <div class="capacity-header">
-          <span>Available spots: {{ selectedDateInfo.availableSpots }}</span>
-        </div>
-        <div class="capacity-bar">
-          <div class="capacity-fill" :style="{ width: capacityPercentage + '%' }"></div>
-          <span class="capacity-text">{{ selectedDateInfo.currentBookings }}/{{ selectedDateInfo.maxCapacity }} people</span>
-        </div>
-      </div>
-
-      <!-- Booking status -->
-      <div class="booking-section">
-        <div v-if="selectedDateInfo.canAccommodateParty" class="booking-available">
-          <div class="availability-badge">
-            <span class="check-icon">✅</span>
-            <span>Available for your party</span>
+              @click="selectDate(day.date)"
+          >
+            {{ day.dayOfMonth }}
           </div>
-          <button v-if="!showBookingForm" class="book-button" @click="showBookingForm = true">
-            <span class="button-text">Book Now</span>
-            <span class="button-price">€{{ totalPrice }}</span>
-          </button>
         </div>
-        <div v-else class="booking-unavailable">
-          <div class="unavailability-badge">
-            <span class="cross-icon">❌</span>
-            <span>Not enough space for {{ partySize }} {{ partySize === 1 ? 'person' : 'people' }}</span>
+
+        <!-- Capacity info panel -->
+        <div v-if="selectedDateInfo" class="capacity-info">
+          <div class="tour-header">
+            <h3>{{ selectedDateInfo.tourName }}</h3>
+            <p class="tour-date">{{ format(selectedDate, 'MMMM d, yyyy') }} at {{ selectedDateInfo.startTime }}</p>
+          </div>
+
+          <!-- Pricing section -->
+          <div class="pricing-section">
+            <div class="price-row">
+              <span class="price-label">Price per person:</span>
+              <span class="price-value">€{{ selectedDateInfo.pricePerPerson }}</span>
+            </div>
+            <div class="price-row">
+              <span class="price-label">Party size:</span>
+              <span class="price-value">{{ partySize }} {{ partySize === 1 ? 'person' : 'people' }}</span>
+            </div>
+            <div class="total-price-row">
+              <span class="total-label">Total Price:</span>
+              <span class="total-amount">€{{ totalPrice }}</span>
+            </div>
+          </div>
+
+          <!-- Capacity section -->
+          <div class="capacity-section">
+            <div class="capacity-header">
+              <span>Available spots: {{ selectedDateInfo.availableSpots }}</span>
+            </div>
+            <div class="capacity-bar">
+              <div class="capacity-fill" :style="{ width: capacityPercentage + '%' }"></div>
+              <span class="capacity-text">{{ selectedDateInfo.currentBookings }}/{{
+                  selectedDateInfo.maxCapacity
+                }} people</span>
+            </div>
+          </div>
+
+          <!-- Booking status -->
+          <div class="booking-section">
+            <div v-if="selectedDateInfo.canAccommodateParty" class="booking-available">
+              <div class="availability-badge">
+                <span class="check-icon">✅</span>
+                <span>Available for your party</span>
+              </div>
+              <button v-if="!showBookingForm" class="book-button" @click="showBookingForm = true">
+                <span class="button-text">Book Now</span>
+                <span class="button-price">€{{ totalPrice }}</span>
+              </button>
+            </div>
+            <div v-else class="booking-unavailable">
+              <div class="unavailability-badge">
+                <span class="cross-icon">❌</span>
+                <span>Not enough space for {{ partySize }} {{ partySize === 1 ? 'person' : 'people' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom photos -->
+        <div class="photo-row bottom-row">
+          <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[3] }" data-direction="bottom-left">
+            <img src="/drumstick-logo.png" alt="Food Tour 4" class="tour-photo"/>
+            <div class="photo-caption">Amsterdam Cafés</div>
+          </div>
+          <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[4] }" data-direction="bottom-center">
+            <img src="/drumstick-logo.png" alt="Food Tour 5" class="tour-photo"/>
+            <div class="photo-caption">Traditional Bites</div>
+          </div>
+          <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[5] }" data-direction="bottom-right">
+            <img src="/drumstick-logo.png" alt="Food Tour 6" class="tour-photo"/>
+            <div class="photo-caption">Sweet Treats</div>
           </div>
         </div>
       </div>
@@ -109,7 +148,9 @@
         </div>
 
         <div class="booking-summary-mini">
-          <span>{{ selectedDateInfo.tourName }} • {{ format(selectedDate, 'MMM d, yyyy') }} at {{ selectedDateInfo.startTime }} • {{ partySize }} people • €{{ totalPrice }}</span>
+          <span>{{ selectedDateInfo.tourName }} • {{
+              format(selectedDate, 'MMM d, yyyy')
+            }} at {{ selectedDateInfo.startTime }} • {{ partySize }} people • €{{ totalPrice }}</span>
         </div>
 
         <form @submit.prevent="processBooking" class="booking-details">
@@ -258,7 +299,8 @@
               <div class="detail-icon">📅</div>
               <div>
                 <p class="detail-label">Date & Time</p>
-                <p class="detail-value">{{ formatPopupDate(bookingDetails?.scheduledTour?.localDate) }} at {{ bookingDetails?.scheduledTour?.startTime || '12:00' }}</p>
+                <p class="detail-value">{{ formatPopupDate(bookingDetails?.scheduledTour?.localDate) }} at
+                  {{ bookingDetails?.scheduledTour?.startTime || '12:00' }}</p>
               </div>
             </div>
 
@@ -266,7 +308,8 @@
               <div class="detail-icon">👥</div>
               <div>
                 <p class="detail-label">Party Size</p>
-                <p class="detail-value">{{ bookingDetails?.numberOfPeople }} {{ bookingDetails?.numberOfPeople === 1 ? 'person' : 'people' }}</p>
+                <p class="detail-value">{{ bookingDetails?.numberOfPeople }}
+                  {{ bookingDetails?.numberOfPeople === 1 ? 'person' : 'people' }}</p>
               </div>
             </div>
 
@@ -299,7 +342,7 @@
         <!-- Footer -->
         <div class="popup-footer">
           <button @click="closeSuccessPopup" class="close-button">Close</button>
-<!--          <button @click="handleViewDetails" class="details-button">View Details</button>-->
+          <!--          <button @click="handleViewDetails" class="details-button">View Details</button>-->
         </div>
       </div>
     </div>
@@ -329,6 +372,7 @@ export default {
       currentDate: new Date(),
       partySize: 2,
       weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      showPhotos: [false, false, false, false, false, false],
       availableDateTimes: [],
       scheduledTours: [],
       selectedDate: null,
@@ -348,6 +392,16 @@ export default {
       bookingDetails: null
     };
   },
+  mounted() {
+// Staggered bizarre animations - each photo comes in at different times
+    const delays = [100, 200, 350, 450, 600, 650];
+    delays.forEach((delay, index) => {
+          setTimeout(() => {
+            this.showPhotos[index] = true;
+          }, delay);
+        }
+    );
+  },
   computed: {
     formattedMonth() {
       return format(this.currentDate, 'MMMM yyyy');
@@ -355,7 +409,7 @@ export default {
     days() {
       const startDay = startOfWeek(startOfMonth(this.currentDate));
       const endDay = endOfWeek(endOfMonth(this.currentDate));
-      return eachDayOfInterval({ start: startDay, end: endDay })
+      return eachDayOfInterval({start: startDay, end: endDay})
           .map(date => ({
             date,
             dayOfMonth: date.getDate()
@@ -409,7 +463,7 @@ export default {
         const month = this.currentDate.getMonth() + 1;
 
         const availabilityResponse = await axios.get(`/api/tour-availability`, {
-          params: { year, month, partySize: this.partySize }
+          params: {year, month, partySize: this.partySize}
         });
 
         this.availableDateTimes = availabilityResponse.data.map(dateStr => ({
@@ -418,7 +472,7 @@ export default {
         }));
 
         const toursResponse = await axios.get('/api/scheduled-tours', {
-          params: { year, month }
+          params: {year, month}
         });
 
         this.scheduledTours = toursResponse.data;
@@ -526,7 +580,7 @@ export default {
       if (sessionId) {
         try {
           const response = await axios.get(`/api/bookings/verify-payment`, {
-            params: { session_id: sessionId }
+            params: {session_id: sessionId}
           });
 
           if (response.status === 200) {
@@ -580,6 +634,154 @@ export default {
   box-sizing: border-box;
 }
 
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.photo-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  perspective: 2000px; /* Deep 3D perspective */
+}
+
+.photo-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.calendar-section {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.tour-photo-container {
+  width: 180px;
+  height: 140px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+
+  /* EXTREME initial state - way off screen with MASSIVE rotation */
+  opacity: 0;
+  transition: all 2s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Bouncy easing */
+}
+
+/* Different crazy entry animations for each position */
+.tour-photo-container[data-direction="top-left"] {
+  transform: translateX(-800px) translateY(-600px) rotateX(720deg) rotateY(1080deg) rotateZ(540deg) scale(0.1);
+}
+
+.tour-photo-container[data-direction="top-center"] {
+  transform: translateX(0px) translateY(-800px) rotateX(-900deg) rotateY(720deg) rotateZ(-720deg) scale(0.1);
+}
+
+.tour-photo-container[data-direction="top-right"] {
+  transform: translateX(800px) translateY(-600px) rotateX(1080deg) rotateY(-540deg) rotateZ(900deg) scale(0.1);
+}
+
+.tour-photo-container[data-direction="bottom-left"] {
+  transform: translateX(-900px) translateY(700px) rotateX(-720deg) rotateY(1440deg) rotateZ(-1080deg) scale(0.1);
+}
+
+.tour-photo-container[data-direction="bottom-center"] {
+  transform: translateX(0px) translateY(900px) rotateX(1440deg) rotateY(-900deg) rotateZ(720deg) scale(0.1);
+}
+
+.tour-photo-container[data-direction="bottom-right"] {
+  transform: translateX(900px) translateY(700px) rotateX(-1080deg) rotateY(1080deg) rotateZ(-1440deg) scale(0.1);
+}
+
+/* FINAL STATE - all photos settle into place */
+.tour-photo-container.animate-in {
+  transform: translateX(0) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+  opacity: 1;
+}
+
+/* Add a subtle hover effect for fun */
+.tour-photo-container:hover {
+  transform: translateX(0) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(5deg) scale(1.05);
+  transition: all 0.3s ease;
+}
+
+.tour-photo {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-caption {
+  padding: 0.5rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Calendar wrapper */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Mobile responsive - stack photos vertically */
+@media (max-width: 768px) {
+  .photo-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .tour-photo-container {
+    width: 200px;
+    height: 150px;
+  }
+
+  /* Reduce crazy rotations on mobile for performance */
+  .tour-photo-container[data-direction*="top"] {
+    transform: translateY(-400px) rotateZ(360deg) scale(0.2);
+  }
+
+  .tour-photo-container[data-direction*="bottom"] {
+    transform: translateY(400px) rotateZ(-360deg) scale(0.2);
+  }
+}
+
+/* Add some sparkle effects during animation */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.tour-photo-container.animate-in::before {
+  content: '✨';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 10;
+  animation: sparkle 0.5s ease-in-out;
+}
+
+.bottom-row {
+  margin-top: 2rem; /* Extra space above bottom photos */
+}
+
 .calendar {
   display: flex;
   flex-direction: column;
@@ -597,7 +799,7 @@ export default {
   border-radius: 12px;
   color: white;
   width: 100%;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .party-size-selector label {
@@ -613,14 +815,14 @@ export default {
   font-size: 1rem;
   background: white;
   color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .party-size-selector select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .controls {
@@ -740,7 +942,7 @@ export default {
   background: white;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   overflow: hidden;
 }
@@ -828,7 +1030,7 @@ export default {
   background-color: #e9ecef;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .capacity-fill {
@@ -845,7 +1047,7 @@ export default {
   transform: translate(-50%, -50%);
   font-weight: 700;
   color: #333;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
   font-size: 0.9rem;
 }
 
@@ -941,8 +1143,12 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .check-icon, .cross-icon {
@@ -954,7 +1160,7 @@ export default {
   margin-top: 1rem;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   overflow: hidden;
   width: 100%;
@@ -988,7 +1194,7 @@ export default {
 }
 
 .close-form:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .booking-summary-mini {
