@@ -1609,6 +1609,134 @@ export default {
   background: #5a6268;
 }
 
+/* Mobile-friendly layout with FULL CRAZY animations intact */
+
+/* Keep all the extreme animations for mobile too! */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+
+  .photo-row {
+    flex-direction: column; /* Stack photos vertically */
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .tour-photo-container {
+    width: 220px; /* Good mobile size */
+    height: 160px;
+
+    /* KEEP THE CRAZY ANIMATIONS - same transition */
+    transition: all 2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .tour-photo {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+  }
+
+  .photo-caption {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* KEEP ALL THE EXTREME ROTATIONS - no changes! */
+  .tour-photo-container[data-direction="top-left"] {
+    transform:
+        translateX(-800px)
+        translateY(-600px)
+        rotateX(720deg)
+        rotateY(1080deg)
+        rotateZ(540deg)
+        scale(0.1);
+  }
+
+  .tour-photo-container[data-direction="top-center"] {
+    transform:
+        translateX(0px)
+        translateY(-800px)
+        rotateX(-900deg)
+        rotateY(720deg)
+        rotateZ(-720deg)
+        scale(0.1);
+  }
+
+  .tour-photo-container[data-direction="top-right"] {
+    transform:
+        translateX(800px)
+        translateY(-600px)
+        rotateX(1080deg)
+        rotateY(-540deg)
+        rotateZ(900deg)
+        scale(0.1);
+  }
+
+  .tour-photo-container[data-direction="bottom-left"] {
+    transform:
+        translateX(-900px)
+        translateY(700px)
+        rotateX(-720deg)
+        rotateY(1440deg)
+        rotateZ(-1080deg)
+        scale(0.1);
+  }
+
+  .tour-photo-container[data-direction="bottom-center"] {
+    transform:
+        translateX(0px)
+        translateY(900px)
+        rotateX(1440deg)
+        rotateY(-900deg)
+        rotateZ(720deg)
+        scale(0.1);
+  }
+
+  .tour-photo-container[data-direction="bottom-right"] {
+    transform:
+        translateX(900px)
+        translateY(700px)
+        rotateX(-1080deg)
+        rotateY(1080deg)
+        rotateZ(-1440deg)
+        scale(0.1);
+  }
+
+  /* Same final state */
+  .tour-photo-container.animate-in {
+    transform:
+        translateX(0)
+        translateY(0)
+        rotateX(0deg)
+        rotateY(0deg)
+        rotateZ(0deg)
+        scale(1);
+    opacity: 1;
+  }
+
+  /* Keep the hover effect too */
+  .tour-photo-container:hover {
+    transform:
+        translateX(0)
+        translateY(0)
+        rotateX(0deg)
+        rotateY(0deg)
+        rotateZ(5deg)
+        scale(1.05);
+    transition: all 0.3s ease;
+  }
+
+  /* Spacing adjustments only */
+  .photo-grid {
+    gap: 2rem;
+  }
+
+  .calendar-section {
+    margin: 2rem 0;
+  }
+}
+
 /* Mobile responsive */
 @media (max-width: 600px) {
   .form-row {
