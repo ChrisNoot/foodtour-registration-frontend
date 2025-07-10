@@ -121,6 +121,142 @@
           </div>
         </div>
 
+        <!-- Booking Form (slides down when Book Now is clicked) -->
+        <transition name="slide-down">
+          <div v-if="showBookingForm" class="booking-form">
+            <div class="form-header">
+              <h3>Complete Your Booking</h3>
+              <button class="close-form" @click="closeBookingForm">×</button>
+            </div>
+
+            <div class="booking-summary-mini">
+          <span>{{ selectedDateInfo.tourName }} • {{
+              format(selectedDate, 'MMM d, yyyy')
+            }} at {{ selectedDateInfo.startTime }} • {{ partySize }} people • €{{ totalPrice }}</span>
+            </div>
+
+            <form @submit.prevent="processBooking" class="booking-details">
+              <!-- Customer Information -->
+              <div class="form-section">
+                <h4>Your Details</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input
+                        type="text"
+                        id="firstName"
+                        v-model="bookingForm.firstName"
+                        required
+                        placeholder="John"
+                    >
+                  </div>
+                  <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input
+                        type="text"
+                        id="lastName"
+                        v-model="bookingForm.lastName"
+                        required
+                        placeholder="Doe"
+                    >
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input
+                        type="email"
+                        id="email"
+                        v-model="bookingForm.email"
+                        required
+                        placeholder="john@example.com"
+                    >
+                  </div>
+                  <div class="form-group">
+                    <label for="phone">Phone *</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        v-model="bookingForm.phone"
+                        required
+                        placeholder="+31 6 1234 5678"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Information -->
+              <div class="form-section">
+                <h4>Additional Information <span class="optional">(Optional)</span></h4>
+                <div class="form-group">
+                  <label for="dietary">Dietary Restrictions or Allergies</label>
+                  <textarea
+                      id="dietary"
+                      v-model="bookingForm.dietaryRestrictions"
+                      placeholder="e.g., Vegetarian, Gluten-free, Nut allergy..."
+                      rows="2"
+                  ></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="requests">Special Requests</label>
+                  <textarea
+                      id="requests"
+                      v-model="bookingForm.specialRequests"
+                      placeholder="e.g., Wheelchair accessible, Birthday celebration..."
+                      rows="2"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Payment Section -->
+              <div class="form-section">
+                <h4>Payment</h4>
+                <div class="payment-summary">
+                  <div class="payment-row">
+                    <span>{{ partySize }} × €{{ selectedDateInfo.pricePerPerson }}</span>
+                    <span>€{{ totalPrice }}</span>
+                  </div>
+                  <div class="payment-total">
+                    <span>Total Amount</span>
+                    <span>€{{ totalPrice }}</span>
+                  </div>
+                </div>
+
+                <!-- Simple Stripe Payment Info -->
+                <div class="payment-element">
+                  <div class="stripe-payment-box">
+                    <div class="stripe-header">
+                      <span class="credit-card-icon">💳</span>
+                      <span>Secure payment with Stripe</span>
+                    </div>
+                    <div class="payment-methods-text">
+                      Credit card, iDEAL, and more payment methods
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Form Actions -->
+              <div class="form-actions">
+                <button type="button" class="cancel-button" @click="closeBookingForm">
+                  Cancel
+                </button>
+                <button type="submit" class="confirm-booking-button" :disabled="isProcessing">
+                  <span v-if="!isProcessing">Complete Booking - €{{ totalPrice }}</span>
+                  <span v-else>Processing...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </transition>
+
+        <!-- Loading state -->
+        <div v-if="isLoading" class="loading">
+          <div class="loading-spinner"></div>
+          <span>Loading availability...</span>
+        </div>
+
         <!-- Bottom photos -->
         <div class="photo-row bottom-row">
           <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[3] }" data-direction="bottom-left">
@@ -137,142 +273,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Booking Form (slides down when Book Now is clicked) -->
-    <transition name="slide-down">
-      <div v-if="showBookingForm" class="booking-form">
-        <div class="form-header">
-          <h3>Complete Your Booking</h3>
-          <button class="close-form" @click="closeBookingForm">×</button>
-        </div>
-
-        <div class="booking-summary-mini">
-          <span>{{ selectedDateInfo.tourName }} • {{
-              format(selectedDate, 'MMM d, yyyy')
-            }} at {{ selectedDateInfo.startTime }} • {{ partySize }} people • €{{ totalPrice }}</span>
-        </div>
-
-        <form @submit.prevent="processBooking" class="booking-details">
-          <!-- Customer Information -->
-          <div class="form-section">
-            <h4>Your Details</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName">First Name *</label>
-                <input
-                    type="text"
-                    id="firstName"
-                    v-model="bookingForm.firstName"
-                    required
-                    placeholder="John"
-                >
-              </div>
-              <div class="form-group">
-                <label for="lastName">Last Name *</label>
-                <input
-                    type="text"
-                    id="lastName"
-                    v-model="bookingForm.lastName"
-                    required
-                    placeholder="Doe"
-                >
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input
-                    type="email"
-                    id="email"
-                    v-model="bookingForm.email"
-                    required
-                    placeholder="john@example.com"
-                >
-              </div>
-              <div class="form-group">
-                <label for="phone">Phone *</label>
-                <input
-                    type="tel"
-                    id="phone"
-                    v-model="bookingForm.phone"
-                    required
-                    placeholder="+31 6 1234 5678"
-                >
-              </div>
-            </div>
-          </div>
-
-          <!-- Additional Information -->
-          <div class="form-section">
-            <h4>Additional Information <span class="optional">(Optional)</span></h4>
-            <div class="form-group">
-              <label for="dietary">Dietary Restrictions or Allergies</label>
-              <textarea
-                  id="dietary"
-                  v-model="bookingForm.dietaryRestrictions"
-                  placeholder="e.g., Vegetarian, Gluten-free, Nut allergy..."
-                  rows="2"
-              ></textarea>
-            </div>
-            <div class="form-group">
-              <label for="requests">Special Requests</label>
-              <textarea
-                  id="requests"
-                  v-model="bookingForm.specialRequests"
-                  placeholder="e.g., Wheelchair accessible, Birthday celebration..."
-                  rows="2"
-              ></textarea>
-            </div>
-          </div>
-
-          <!-- Payment Section -->
-          <div class="form-section">
-            <h4>Payment</h4>
-            <div class="payment-summary">
-              <div class="payment-row">
-                <span>{{ partySize }} × €{{ selectedDateInfo.pricePerPerson }}</span>
-                <span>€{{ totalPrice }}</span>
-              </div>
-              <div class="payment-total">
-                <span>Total Amount</span>
-                <span>€{{ totalPrice }}</span>
-              </div>
-            </div>
-
-            <!-- Simple Stripe Payment Info -->
-            <div class="payment-element">
-              <div class="stripe-payment-box">
-                <div class="stripe-header">
-                  <span class="credit-card-icon">💳</span>
-                  <span>Secure payment with Stripe</span>
-                </div>
-                <div class="payment-methods-text">
-                  Credit card, iDEAL, and more payment methods
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button type="button" class="cancel-button" @click="closeBookingForm">
-              Cancel
-            </button>
-            <button type="submit" class="confirm-booking-button" :disabled="isProcessing">
-              <span v-if="!isProcessing">Complete Booking - €{{ totalPrice }}</span>
-              <span v-else>Processing...</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </transition>
-
-    <!-- Loading state -->
-    <div v-if="isLoading" class="loading">
-      <div class="loading-spinner"></div>
-      <span>Loading availability...</span>
     </div>
 
     <!-- Booking Success Popup -->
