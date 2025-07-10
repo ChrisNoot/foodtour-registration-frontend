@@ -1062,6 +1062,13 @@ export default {
   outline: none; /* Remove focus outline, we'll add custom */
 }
 
+/* Placeholder styles */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  font-size: 0.75rem; /* Smaller than the input text (1rem) */
+  color: #999; /* Lighter color */
+}
+
 /* Focus states */
 .form-group input:focus,
 .form-group textarea:focus {
