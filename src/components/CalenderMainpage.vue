@@ -290,7 +290,7 @@
             <h3>What's Next?</h3>
             <ul>
               <li>You'll receive a confirmation email shortly</li>
-              <li>Meet at the designated starting point 15 minutes early</li>
+              <li>Meet at the designated starting point 10 minutes early</li>
               <li>Bring a good appetite and comfortable walking shoes!</li>
             </ul>
           </div>
