@@ -27,7 +27,7 @@ export default {
 }
 
 .subtitle {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: darkgray;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
