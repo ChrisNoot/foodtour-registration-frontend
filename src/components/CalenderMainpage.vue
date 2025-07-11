@@ -68,7 +68,8 @@
           'available': !isPastDate(day.date) && isAvailable(day.date),
           'unavailable': !isPastDate(day.date) && !isAvailable(day.date) && isScheduledDate(day.date),
           'no-tour': !isPastDate(day.date) && !isScheduledDate(day.date),
-          'selected': selectedDate && isSameDay(selectedDate, day.date)
+          'selected': selectedDate && isSameDay(selectedDate, day.date),
+          'has-bookings': !isPastDate(day.date) && hasBookings(day.date)
         }]"
               @click="selectDate(day.date)"
           >
@@ -500,6 +501,13 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+
+    hasBookings(date) {
+      const tour = this.scheduledTours.find(tour =>
+          isSameDay(parseISO(tour.localDate), date)
+      );
+      return tour && tour.currentBookings > 0;
     },
 
     selectDate(date) {
@@ -985,6 +993,38 @@ export default {
   font-weight: 700;
   box-shadow: 0 4px 15px rgba(76, 175, 80, 0.5);
   transform: scale(1.1);
+}
+
+/* Orange style for dates with bookings */
+.day.has-bookings {
+  background: linear-gradient(135deg, #ff9500 0%, #ff7b00 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.4);
+}
+
+.day.has-bookings:hover {
+  background: linear-gradient(135deg, #ff7b00 0%, #ff6600 100%);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.6);
+}
+
+/* Handle when a date has bookings AND is selected */
+.day.has-bookings.selected {
+  background: linear-gradient(135deg, #ff6600 0%, #e55a00 100%);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(255, 102, 0, 0.7);
+}
+
+/* Handle when a date has bookings AND is available */
+.day.has-bookings.available {
+  background: linear-gradient(135deg, #ff9500 0%, #ff7b00 100%);
+  color: white;
+}
+
+/* Handle when a date has bookings but is unavailable (fully booked) */
+.day.has-bookings.unavailable {
+  background: linear-gradient(135deg, #ff4444 0%, #cc3333 100%);
+  color: white;
 }
 
 .capacity-info {
