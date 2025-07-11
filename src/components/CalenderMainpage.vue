@@ -1,16 +1,17 @@
 <template>
-  <!--referralbanner-->
-  <div v-if="showReferralBanner" class="referral-banner">
-    <div class="referral-content">
-      <span class="referral-icon">🤝</span>
-      <div class="referral-text">
-        <strong>Recommended by {{ referralPartner }}</strong>
-        <p>Enjoy your food tour with our trusted partner!</p>
-      </div>
-      <button @click="showReferralBanner = false" class="close-banner">×</button>
-    </div>
-  </div>
+
   <div class="main-container">
+    <!--referralbanner-->
+    <div v-if="showReferralBanner" class="referral-banner">
+      <div class="referral-content">
+        <span class="referral-icon">🤝</span>
+        <div class="referral-text">
+          <strong>Recommended by {{ referralPartner }}</strong>
+          <p>Enjoy your food tour with our trusted partner!</p>
+        </div>
+        <button @click="showReferralBanner = false" class="close-banner">×</button>
+      </div>
+    </div>
     <!-- Photos around the calendar -->
     <div class="photo-grid">
       <!-- Top photos -->
@@ -1737,6 +1738,111 @@ export default {
 
   .calendar-section {
     margin: 2rem 0;
+  }
+}
+
+/* Replace your referral banner styles with these: */
+
+.referral-banner {
+  margin-bottom: 2rem;
+  padding: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  /* Black dashed border */
+  border: 2px dashed #000000;
+}
+
+.referral-content {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center the entire group */
+  gap: 1rem; /* Even spacing between all elements */
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.referral-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.referral-text {
+  text-align: center;
+}
+
+.referral-text strong {
+  display: block;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.referral-text p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.close-banner {
+  background: white;
+  border: 2px solid #e9ecef;
+  color: #666;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-banner:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.close-banner:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .referral-content {
+    padding: 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .referral-icon {
+    font-size: 1.5rem;
+  }
+
+  .referral-text strong {
+    font-size: 1rem;
+  }
+
+  .referral-text p {
+    font-size: 0.85rem;
+  }
+
+  .close-banner {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
   }
 }
 
