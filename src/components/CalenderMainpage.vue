@@ -1,16 +1,16 @@
 <template>
-  <div class="main-container">
-    <!--referralbanner-->
-    <div v-if="showReferralBanner" class="referral-banner">
-      <div class="referral-content">
-        <span class="referral-icon">🤝</span>
-        <div class="referral-text">
-          <strong>Recommended by {{ referralPartner }}</strong>
-          <p>Enjoy your food tour with our trusted partner!</p>
-        </div>
-        <button @click="showReferralBanner = false" class="close-banner">×</button>
+  <!--referralbanner-->
+  <div v-if="showReferralBanner" class="referral-banner">
+    <div class="referral-content">
+      <span class="referral-icon">🤝</span>
+      <div class="referral-text">
+        <strong>Recommended by {{ referralPartner }}</strong>
+        <p>Enjoy your food tour with our trusted partner!</p>
       </div>
+      <button @click="showReferralBanner = false" class="close-banner">×</button>
     </div>
+  </div>
+  <div class="main-container">
     <!-- Photos around the calendar -->
     <div class="photo-grid">
       <!-- Top photos -->
