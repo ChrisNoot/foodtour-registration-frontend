@@ -1,5 +1,16 @@
 <template>
   <div class="main-container">
+    <!--referralbanner-->
+    <div v-if="showReferralBanner" class="referral-banner">
+      <div class="referral-content">
+        <span class="referral-icon">🤝</span>
+        <div class="referral-text">
+          <strong>Recommended by {{ referralPartner }}</strong>
+          <p>Enjoy your food tour with our trusted partner!</p>
+        </div>
+        <button @click="showReferralBanner = false" class="close-banner">×</button>
+      </div>
+    </div>
     <!-- Photos around the calendar -->
     <div class="photo-grid">
       <!-- Top photos -->
@@ -369,6 +380,7 @@ export default {
   name: 'CalendarMainpage',
   data() {
     return {
+      // Calender data
       currentDate: new Date(),
       partySize: 2,
       weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -377,6 +389,7 @@ export default {
       scheduledTours: [],
       selectedDate: null,
       isLoading: false,
+      // Booking data
       showBookingForm: false,
       isProcessing: false,
       bookingForm: {
@@ -389,7 +402,11 @@ export default {
       },
       // Popup related data
       showSuccessPopup: false,
-      bookingDetails: null
+      bookingDetails: null,
+      // Referral related data
+      referralCode: null,
+      referralPartner: null,
+      showReferralBanner: false
     };
   },
   mounted() {
@@ -517,7 +534,6 @@ export default {
       this.isProcessing = true;
 
       try {
-        // Prepare booking data for backend
         const bookingData = {
           scheduledTourId: this.getScheduledTourId(),
           partySize: this.partySize,
@@ -526,102 +542,137 @@ export default {
           tourDate: format(this.selectedDate, 'yyyy-MM-dd')
         };
 
-        // Call backend to create Stripe checkout session
-        const response = await axios.post('/api/bookings/create-checkout-session', bookingData);
+        // Add referral code as query parameter
+        let url = '/api/bookings/create-checkout-session';
+        if (this.referralCode) {
+          url += `?ref=${this.referralCode}`;
+        }
 
+        const response = await axios.post(url, bookingData);
         // Redirect to Stripe Checkout
         window.location.href = response.data.checkoutUrl;
 
       } catch (error) {
         console.error('Booking failed:', error);
-
-        // Better error handling
         if (error.response && error.response.data) {
           alert(`Booking failed: ${error.response.data}`);
         } else {
           alert('Booking failed. Please try again.');
         }
-
         this.isProcessing = false;
       }
-    },
+    }
+  },
 
-    getScheduledTourId() {
-      const tour = this.scheduledTours.find(tour =>
-          isSameDay(parseISO(tour.localDate), this.selectedDate)
-      );
-      return tour ? tour.scheduledTourId : null;
-    },
+  getScheduledTourId() {
+    const tour = this.scheduledTours.find(tour =>
+        isSameDay(parseISO(tour.localDate), this.selectedDate)
+    );
+    return tour ? tour.scheduledTourId : null;
+  },
 
-    changeMonth(delta) {
-      this.currentDate = addMonths(this.currentDate, delta);
-      this.selectedDate = null;
-      this.showBookingForm = false;
-      this.fetchData();
-    },
+  changeMonth(delta) {
+    this.currentDate = addMonths(this.currentDate, delta);
+    this.selectedDate = null;
+    this.showBookingForm = false;
+    this.fetchData();
+  },
 
-    isAvailable(date) {
-      return this.availableDateTimes.some(dateTime =>
-          isSameDay(dateTime.date, date)
-      );
-    },
+  isAvailable(date) {
+    return this.availableDateTimes.some(dateTime =>
+        isSameDay(dateTime.date, date)
+    );
+  },
 
-    isScheduledDate(date) {
-      return this.scheduledTours.some(tour =>
-          isSameDay(parseISO(tour.localDate), date)
-      );
-    },
+  isScheduledDate(date) {
+    return this.scheduledTours.some(tour =>
+        isSameDay(parseISO(tour.localDate), date)
+    );
+  },
 
-    // Popup related methods
-    async checkForPaymentSuccess() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('session_id');
+  // Popup related methods
+  async checkForPaymentSuccess() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
 
-      if (sessionId) {
-        try {
-          const response = await axios.get(`/api/bookings/verify-payment`, {
-            params: {session_id: sessionId}
-          });
+    if (sessionId) {
+      try {
+        const response = await axios.get(`/api/bookings/verify-payment`, {
+          params: {session_id: sessionId}
+        });
 
-          if (response.status === 200) {
-            this.bookingDetails = response.data;
-            this.showSuccessPopup = true;
-            // Refresh the calendar data to show updated availability
-            await this.fetchData();
-          }
-        } catch (error) {
-          console.error('Payment verification failed:', error);
-        } finally {
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
+        if (response.status === 200) {
+          this.bookingDetails = response.data;
+          this.showSuccessPopup = true;
+          // Refresh the calendar data to show updated availability
+          await this.fetchData();
         }
+      } catch (error) {
+        console.error('Payment verification failed:', error);
+      } finally {
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
-    },
+    }
+  },
 
-    closeSuccessPopup() {
-      this.showSuccessPopup = false;
-    },
+  closeSuccessPopup() {
+    this.showSuccessPopup = false;
+  },
 
-    handleViewDetails() {
-      console.log('View booking details:', this.bookingDetails);
-      // You can add navigation to a booking details page here
-      // this.$router.push(`/bookings/${this.bookingDetails.id}`);
-    },
+  handleViewDetails() {
+    console.log('View booking details:', this.bookingDetails);
+    // You can add navigation to a booking details page here
+    // this.$router.push(`/bookings/${this.bookingDetails.id}`);
+  },
 
-    formatPopupDate(dateString) {
-      if (!dateString) return 'Date TBD'
-      return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    },
+  formatPopupDate(dateString) {
+    if (!dateString) return 'Date TBD'
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  },
 
-    isSameDay,
-    format
+  isSameDay,
+  format,
+
+  async checkForReferralCode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+
+    if (refCode) {
+      try {
+        const response = await axios.get(`/api/referral/validate?code=${refCode}`);
+        if (response.data.valid) {
+          this.referralCode = refCode;
+          this.referralPartner = response.data.partnerName;
+          this.showReferralBanner = true;
+
+          // Store in sessionStorage so it persists during booking
+          sessionStorage.setItem('referralCode', refCode);
+          sessionStorage.setItem('referralPartner', response.data.partnerName);
+
+          console.log('✅ Valid referral code from:', response.data.partnerName);
+        }
+      } catch (error) {
+        console.error('Error validating referral code:', error);
+      }
+    } else {
+      // Check if we have a stored referral code
+      const storedRef = sessionStorage.getItem('referralCode');
+      const storedPartner = sessionStorage.getItem('referralPartner');
+      if (storedRef) {
+        this.referralCode = storedRef;
+        this.referralPartner = storedPartner;
+        this.showReferralBanner = true;
+      }
+    }
   },
   async created() {
+    await this.checkForReferralCode(); // Check for referral first
     await this.checkForPaymentSuccess();
     this.fetchData();
   }
@@ -1644,86 +1695,38 @@ export default {
 
   /* KEEP ALL THE EXTREME ROTATIONS - no changes! */
   .tour-photo-container[data-direction="top-left"] {
-    transform:
-        translateX(-800px)
-        translateY(-600px)
-        rotateX(720deg)
-        rotateY(1080deg)
-        rotateZ(540deg)
-        scale(0.1);
+    transform: translateX(-800px) translateY(-600px) rotateX(720deg) rotateY(1080deg) rotateZ(540deg) scale(0.1);
   }
 
   .tour-photo-container[data-direction="top-center"] {
-    transform:
-        translateX(0px)
-        translateY(-800px)
-        rotateX(-900deg)
-        rotateY(720deg)
-        rotateZ(-720deg)
-        scale(0.1);
+    transform: translateX(0px) translateY(-800px) rotateX(-900deg) rotateY(720deg) rotateZ(-720deg) scale(0.1);
   }
 
   .tour-photo-container[data-direction="top-right"] {
-    transform:
-        translateX(800px)
-        translateY(-600px)
-        rotateX(1080deg)
-        rotateY(-540deg)
-        rotateZ(900deg)
-        scale(0.1);
+    transform: translateX(800px) translateY(-600px) rotateX(1080deg) rotateY(-540deg) rotateZ(900deg) scale(0.1);
   }
 
   .tour-photo-container[data-direction="bottom-left"] {
-    transform:
-        translateX(-900px)
-        translateY(700px)
-        rotateX(-720deg)
-        rotateY(1440deg)
-        rotateZ(-1080deg)
-        scale(0.1);
+    transform: translateX(-900px) translateY(700px) rotateX(-720deg) rotateY(1440deg) rotateZ(-1080deg) scale(0.1);
   }
 
   .tour-photo-container[data-direction="bottom-center"] {
-    transform:
-        translateX(0px)
-        translateY(900px)
-        rotateX(1440deg)
-        rotateY(-900deg)
-        rotateZ(720deg)
-        scale(0.1);
+    transform: translateX(0px) translateY(900px) rotateX(1440deg) rotateY(-900deg) rotateZ(720deg) scale(0.1);
   }
 
   .tour-photo-container[data-direction="bottom-right"] {
-    transform:
-        translateX(900px)
-        translateY(700px)
-        rotateX(-1080deg)
-        rotateY(1080deg)
-        rotateZ(-1440deg)
-        scale(0.1);
+    transform: translateX(900px) translateY(700px) rotateX(-1080deg) rotateY(1080deg) rotateZ(-1440deg) scale(0.1);
   }
 
   /* Same final state */
   .tour-photo-container.animate-in {
-    transform:
-        translateX(0)
-        translateY(0)
-        rotateX(0deg)
-        rotateY(0deg)
-        rotateZ(0deg)
-        scale(1);
+    transform: translateX(0) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
     opacity: 1;
   }
 
   /* Keep the hover effect too */
   .tour-photo-container:hover {
-    transform:
-        translateX(0)
-        translateY(0)
-        rotateX(0deg)
-        rotateY(0deg)
-        rotateZ(5deg)
-        scale(1.05);
+    transform: translateX(0) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(5deg) scale(1.05);
     transition: all 0.3s ease;
   }
 
