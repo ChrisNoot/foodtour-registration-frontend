@@ -541,14 +541,14 @@ export default {
           customerInfo: this.bookingForm,
           tourDate: format(this.selectedDate, 'yyyy-MM-dd')
         };
-
         // Add referral code as query parameter
         let url = '/api/bookings/create-checkout-session';
         if (this.referralCode) {
           url += `?ref=${this.referralCode}`;
         }
-
+        // Call backend to create Stripe checkout session
         const response = await axios.post(url, bookingData);
+
         // Redirect to Stripe Checkout
         window.location.href = response.data.checkoutUrl;
 
@@ -559,10 +559,10 @@ export default {
         } else {
           alert('Booking failed. Please try again.');
         }
+
         this.isProcessing = false;
       }
-    }
-  },
+    },
 
   getScheduledTourId() {
     const tour = this.scheduledTours.find(tour =>
@@ -636,40 +636,40 @@ export default {
     })
   },
 
-  isSameDay,
-  format,
+    isSameDay,
+    format,
+    async checkForReferralCode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
 
-  async checkForReferralCode() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
+      if (refCode) {
+        try {
+          const response = await axios.get(`/api/referral/validate?code=${refCode}`);
+          if (response.data.valid) {
+            this.referralCode = refCode;
+            this.referralPartner = response.data.partnerName;
+            this.showReferralBanner = true;
 
-    if (refCode) {
-      try {
-        const response = await axios.get(`/api/referral/validate?code=${refCode}`);
-        if (response.data.valid) {
-          this.referralCode = refCode;
-          this.referralPartner = response.data.partnerName;
-          this.showReferralBanner = true;
+            // Store in sessionStorage so it persists during booking
+            sessionStorage.setItem('referralCode', refCode);
+            sessionStorage.setItem('referralPartner', response.data.partnerName);
 
-          // Store in sessionStorage so it persists during booking
-          sessionStorage.setItem('referralCode', refCode);
-          sessionStorage.setItem('referralPartner', response.data.partnerName);
-
-          console.log('✅ Valid referral code from:', response.data.partnerName);
+            console.log('✅ Valid referral code from:', response.data.partnerName);
+          }
+        } catch (error) {
+          console.error('Error validating referral code:', error);
         }
-      } catch (error) {
-        console.error('Error validating referral code:', error);
+      } else {
+        // Check if we have a stored referral code
+        const storedRef = sessionStorage.getItem('referralCode');
+        const storedPartner = sessionStorage.getItem('referralPartner');
+        if (storedRef) {
+          this.referralCode = storedRef;
+          this.referralPartner = storedPartner;
+          this.showReferralBanner = true;
+        }
       }
-    } else {
-      // Check if we have a stored referral code
-      const storedRef = sessionStorage.getItem('referralCode');
-      const storedPartner = sessionStorage.getItem('referralPartner');
-      if (storedRef) {
-        this.referralCode = storedRef;
-        this.referralPartner = storedPartner;
-        this.showReferralBanner = true;
-      }
-    }
+    },
   },
   async created() {
     await this.checkForReferralCode(); // Check for referral first
