@@ -22,7 +22,7 @@
         </div>
         <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[1] }" data-direction="top-center">
           <img src="../../public/photos/fresh-herring.jpg" alt="Food Tour 2" class="tour-photo"/>
-          <div class="photo-caption">(Fresh) herring 🐟</div>
+          <div class="photo-caption">(Fresh) Herring 🐟</div>
         </div>
         <div class="tour-photo-container" :class="{ 'animate-in': showPhotos[2] }" data-direction="top-right">
           <img src="../../public/photos/fun.jpg" alt="Food Tour 3" class="tour-photo"/>
