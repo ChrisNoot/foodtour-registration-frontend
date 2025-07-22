@@ -408,7 +408,7 @@ export default {
       // Referral related data
       referralCode: null,
       referralPartner: null,
-      showReferralBanner: false
+      showReferralBanner: true
     };
   },
   mounted() {
